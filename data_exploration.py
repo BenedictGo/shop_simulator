@@ -4,9 +4,16 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import glob
 
 #load data
-df = pd.read_csv('Data/monday.csv', sep=';',parse_dates=True, index_col=0)
+df = pd.DataFrame()
+for file in glob.glob("Data/*.csv"):
+    current_df = pd.read_csv(file, sep=';',parse_dates=True, index_col=0)
+    current_df['customer_key'] = current_df.index.day.map(str) + 'c' + current_df['customer_no'].map(str)
+    df = pd.concat([df,current_df])
+
+#df = pd.read_csv('Data/monday.csv', sep=';',parse_dates=True, index_col=0)
 
 #total number of unique customers for each shop section
 df.groupby('location').size()
@@ -15,9 +22,9 @@ df.groupby('location').size()
 #fill in missing minutes
 df_full = pd.DataFrame()
 
-for customer in df['customer_no'].unique():
-    df_customer = df[df['customer_no'] == int(customer)]
-    df_customer= df_customer.resample("1min").first().interpolate(method='pad')
+for customer in df['customer_key'].unique():
+    df_customer = df[df['customer_key'] == customer]
+    df_customer = df_customer.resample("1min").first().interpolate(method='pad')
     df_full = pd.concat([df_full, df_customer])
 
 #add minute and hour column
